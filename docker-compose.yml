@@ -1,0 +1,34 @@
+version: '2'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    ports:
+      - 9200:9200
+    volumes:
+      - ./volumes/elasticsearch:/usr/share/elasticsearch/data
+      - ./elastiflow/jvm.options:/usr/share/logstash/config/jvm.options
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.3.2
+    ports:
+      - 5601:5601
+    links:
+      - elasticsearch
+
+  elastiflow:
+    build: ./elastiflow
+    ports:
+      - 2055:2055/udp
+      - 6343:6343/udp
+    volumes:
+      - ./volumes/elastiflow/logstash/elastiflow:/usr/share/logstash/config/elastiflow
+      - ./elastiflow/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+      - ./elastiflow/jvm.options:/usr/share/logstash/config/jvm.options
+    environment:
+      ELASTIFLOW_DICT_PATH: /usr/share/logstash/config/elastiflow/dictionaries
+      ELASTIFLOW_TEMPLATE_PATH: /usr/share/logstash/config/elastiflow/templates
+      ELASTIFLOW_GEOIP_DB_PATH: /usr/share/logstash/config//elastiflow/geoipdbs
+      ELASTIFLOW_ES_HOST: elasticsearch:9200
+    links:
+      - elasticsearch
